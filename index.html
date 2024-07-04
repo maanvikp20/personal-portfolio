@@ -79,11 +79,12 @@
             padding: 10px 15px;
             border-radius: 10px;
             font-size: 0.9em;
+            height: 50px;
         }
         .social-links {
-            grid-column: span 2;
+            grid-column: 1 / -1;
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 10px;
             margin-top: -20px;
         }
@@ -116,11 +117,36 @@
         }
         .organizations {
             grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .organizations h2 {
             margin: 0;
             font-size: 1.5em;
         }
+<<<<<<< HEAD
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            .skills {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .social-links {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        @media (max-width: 480px) {
+            .intro {
+                font-size: 1.8em;
+            }
+            .skills {
+                grid-template-columns: 1fr;
+            }
+            .social-links {
+                grid-template-columns: 1fr;
+=======
 
         @media (min-width: 768px) {
             .left-column {
@@ -128,6 +154,7 @@
             }
             .right-column {
                 flex: 2 1 40%;
+>>>>>>> 45ad4516e846db7cb25f54cbeee058610cdf804f
             }
         }
     </style>
@@ -163,9 +190,9 @@
             <div class="right-column">
                 <div class="github">
                     <h3>github</h3>
-                    <p>latest commit in <a href="#" style="color: #4a8aff;">...</a></p>
-                    <p>professionalism is key</p>
-                    <p>...</p>
+                    <p>latest commit in <span id="latest-commit"><a href="#" style="color: #4a8aff;">...</a></span></p>
+                    <p class="commit-message" id="commit-message">professionalism is key</p>
+                    <p class="commit-date" id="commit-date">committed on...</p>
                 </div>
                 <div class="spotify">
                     <h3>spotify currently playing</h3>
@@ -187,5 +214,69 @@
             </div>
         </div>
     </div>
+    <script>
+        const username = 'maanvikp20';
+        const token = '#';
+    
+        async function fetchLatestCommit() {
+            const url = `https://api.github.com/users/${username}/repos`;
+    
+            try {
+                const headers = {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                };
+    
+                const response = await fetch(url, { headers });
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch repositories. Status: ${response.status}`);
+                }
+                const repos = await response.json();
+                let latestCommit = null;
+    
+                for (const repo of repos) {
+                    const commitsUrl = `https://api.github.com/repos/${username}/${repo.name}/commits`;
+                    const commitsResponse = await fetch(commitsUrl, { headers });
+    
+                    if (!commitsResponse.ok) {
+                        console.warn(`Error fetching commits for repo ${repo.name}. Status: ${commitsResponse.status}`);
+                        continue;
+                    }
+    
+                    const commits = await commitsResponse.json();
+                    if (commits.length > 0) {
+                        const commit = commits[0];
+                        if (commit && commit.commit && commit.commit.committer) {
+                            if (!latestCommit || new Date(commit.commit.committer.date) > new Date(latestCommit.date)) {
+                                latestCommit = {
+                                    repo: repo.name,
+                                    message: commit.commit.message,
+                                    url: commit.html_url,
+                                    date: commit.commit.committer.date,
+                                };
+                            }
+                        } else {
+                            console.warn(`Invalid commit data for repo ${repo.name}. Commit object:`, commit);
+                        }
+                    }
+                }
+    
+                if (latestCommit) {
+                    document.getElementById('latest-commit').innerHTML = `
+                        <a href="${latestCommit.url}" target="_blank">${latestCommit.repo}</a>
+                    `;
+                    document.getElementById('commit-message').textContent = latestCommit.message;
+                    document.getElementById('commit-date').textContent = new Date(latestCommit.date).toLocaleString();
+                } else {
+                    document.getElementById('latest-commit').innerHTML = `<span style="color: #ff4a4a;">No commits found</span>`;
+                }
+            } catch (error) {
+                console.error('Error fetching the latest commit:', error);
+                document.getElementById('latest-commit').innerHTML = `<span style="color: #ff4a4a;">Error fetching commit: ${error.message}</span>`;
+            }
+        }
+    
+        fetchLatestCommit();
+    </script>    
 </body>
 </html>
